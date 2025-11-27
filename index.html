@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReelScribe - Instagram Reel Transcription</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            background: white;
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .logo svg {
+            width: 40px;
+            height: 40px;
+            stroke: #667eea;
+            stroke-width: 2;
+            fill: none;
+        }
+
+        h1 {
+            color: white;
+            font-size: 42px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.9);
+            font-size: 20px;
+            margin-top: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            color: #374151;
+            font-weight: 600;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 20px 25px;
+            font-size: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="url"]:focus {
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .info-box {
+            background: #f3f4f6;
+            padding: 30px;
+            border-radius: 20px;
+            margin-top: 30px;
+        }
+
+        .info-box h3 {
+            color: #6b21a8;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .info-box ol {
+            list-style: none;
+            counter-reset: item;
+        }
+
+        .info-box li {
+            counter-increment: item;
+            padding: 10px 0;
+            color: #374151;
+            display: flex;
+            gap: 15px;
+        }
+
+        .info-box li::before {
+            content: counter(item) ".";
+            font-weight: bold;
+            color: #667eea;
+            min-width: 25px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading h2 {
+            color: #1f2937;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .loading p {
+            color: #6b7280;
+            font-size: 16px;
+        }
+
+        .dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .result {
+            padding: 40px 0;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+        }
+
+        .result-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .result-title svg {
+            color: #10b981;
+        }
+
+        .result-title h2 {
+            color: #1f2937;
+            font-size: 24px;
+        }
+
+        .copy-btn {
+            padding: 12px 20px;
+            background: #ede9fe;
+            color: #6b21a8;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: #ddd6fe;
+        }
+
+        .transcription-box {
+            background: #f9fafb;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            padding: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 25px;
+        }
+
+        .transcription-text {
+            white-space: pre-wrap;
+            color: #1f2937;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .reset-btn {
+            width: 100%;
+            padding: 18px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .reset-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            margin-top: 30px;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                </div>
+                <h1>ReelScribe</h1>
+            </div>
+            <p class="subtitle">AI-Powered Instagram Reel Transcription</p>
+        </div>
+
+        <div class="card">
+            <div id="inputView">
+                <div class="input-section">
+                    <label for="urlInput">Paste Instagram Reel URL</label>
+                    <input 
+                        type="url" 
+                        id="urlInput" 
+                        placeholder="https://www.instagram.com/reel/..."
+                    >
+                </div>
+
+                <button class="btn" id="transcribeBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Transcribe Reel
+                </button>
+
+                <div class="info-box">
+                    <h3>How it works:</h3>
+                    <ol>
+                        <li>Copy the URL of any Instagram reel</li>
+                        <li>Paste it in the box above</li>
+                        <li>Click "Transcribe Reel" and wait for AI to process</li>
+                        <li>Get your transcription instantly!</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div id="loadingView" class="loading hidden">
+                <div class="spinner"></div>
+                <h2>Transcribing audio...</h2>
+                <p>This usually takes 5-30 seconds</p>
+                <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+
+            <div id="resultView" class="result hidden">
+                <div class="result-header">
+                    <div class="result-title">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                        <h2>Transcription Complete!</h2>
+                    </div>
+                    <button class="copy-btn" id="copyBtn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span id="copyBtnText">Copy Text</span>
+                    </button>
+                </div>
+
+                <div class="transcription-box">
+                    <div class="transcription-text" id="transcriptionText"></div>
+                </div>
+
+                <button class="reset-btn" id="resetBtn">Transcribe Another Reel</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            Powered by OpenAI Whisper
+        </div>
+    </div>
+
+    <script>
+        const urlInput = document.getElementById('urlInput');
+        const transcribeBtn = document.getElementById('transcribeBtn');
+        const inputView = document.getElementById('inputView');
+        const loadingView = document.getElementById('loadingView');
+        const resultView = document.getElementById('resultView');
+        const transcriptionText = document.getElementById('transcriptionText');
+        const copyBtn = document.getElementById('copyBtn');
+        const copyBtnText = document.getElementById('copyBtnText');
+        const resetBtn = document.getElementById('resetBtn');
+
+        transcribeBtn.addEventListener('click', handleTranscribe);
+        copyBtn.addEventListener('click', handleCopy);
+        resetBtn.addEventListener('click', handleReset);
+
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleTranscribe();
+            }
+        });
+
+        async function handleTranscribe() {
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                alert('Please enter an Instagram URL');
+                return;
+            }
+
+            if (!url.includes('instagram.com')) {
+                alert('Please enter a valid Instagram URL');
+                return;
+            }
+
+            inputView.classList.add('hidden');
+            loadingView.classList.remove('hidden');
+            transcribeBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/transcribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    transcriptionText.textContent = data.transcription;
+                    loadingView.classList.add('hidden');
+                    resultView.classList.remove('hidden');
+                } else {
+                    throw new Error(data.error || 'Transcription failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+                handleReset();
+            } finally {
+                transcribeBtn.disabled = false;
+            }
+        }
+
+        function handleCopy() {
+            navigator.clipboard.writeText(transcriptionText.textContent);
+            copyBtnText.textContent = 'Copied!';
+            setTimeout(() => {
+                copyBtnText.textContent = 'Copy Text';
+            }, 2000);
+        }
+
+        function handleReset() {
+            urlInput.value = '';
+            inputView.classList.remove('hidden');
+            loadingView.classList.add('hidden');
+            resultView.classList.add('hidden');
+            transcriptionText.textContent = '';
+        }
+    </script>
+</body>
+</html>
