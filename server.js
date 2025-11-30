@@ -27,13 +27,18 @@ app.post('/api/transcribe', async (req, res) => {
   const tempAudioPath = path.join(tempDir, `audio_${Date.now()}.mp3`);
 
   try {
-    console.log('Step 1: Downloading Instagram reel...');
-    await execPromise(`yt-dlp -f "best[ext=mp4]" -o "${tempVideoPath}" "${url}"`);
+    console.log('Step 1: Downloading Instagram reel via RapidAPI...');
+    
+    // Download using RapidAPI Instagram Downloader
+    const videoUrl = await downloadInstagramReel(url);
+    
+    console.log('Step 2: Downloading video file...');
+    await downloadFile(videoUrl, tempVideoPath);
 
-    console.log('Step 2: Extracting audio...');
+    console.log('Step 3: Extracting audio...');
     await execPromise(`ffmpeg -i "${tempVideoPath}" -vn -acodec libmp3lame -ab 128k "${tempAudioPath}"`);
 
-    console.log('Step 3: Transcribing...');
+    console.log('Step 4: Transcribing...');
     const transcription = await transcribeAudio(tempAudioPath);
 
     if (fs.existsSync(tempVideoPath)) fs.unlinkSync(tempVideoPath);
@@ -48,6 +53,55 @@ app.post('/api/transcribe', async (req, res) => {
     res.status(500).json({ error: 'Failed to transcribe', details: error.message });
   }
 });
+
+async function downloadInstagramReel(instagramUrl) {
+  const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
+  
+  if (!RAPIDAPI_KEY) {
+    throw new Error('RapidAPI key not configured');
+  }
+
+  const response = await axios.get('https://instagram-downloader-download-instagram-stories-videos4.p.rapidapi.com/convert', {
+    params: { url: instagramUrl },
+    headers: {
+      'x-rapidapi-host': 'instagram-downloader-download-instagram-stories-videos4.p.rapidapi.com',
+      'x-rapidapi-key': RAPIDAPI_KEY
+    }
+  });
+
+  // Extract video URL from response
+  if (response.data && response.data.media && response.data.media.length > 0) {
+    // Get the highest quality video (usually the first one or look for HD)
+    const videoData = response.data.media.find(m => m.type === 'video' || m.quality === 'HD') || response.data.media[0];
+    
+    if (videoData.url) {
+      return videoData.url;
+    }
+    
+    // Fallback to thumbnail if video URL not found
+    if (videoData.thumbnail) {
+      throw new Error('Only thumbnail available, video URL not found');
+    }
+  }
+
+  throw new Error('Could not extract video URL from Instagram');
+}
+
+async function downloadFile(url, outputPath) {
+  const response = await axios({
+    method: 'GET',
+    url: url,
+    responseType: 'stream'
+  });
+
+  const writer = fs.createWriteStream(outputPath);
+  response.data.pipe(writer);
+
+  return new Promise((resolve, reject) => {
+    writer.on('finish', resolve);
+    writer.on('error', reject);
+  });
+}
 
 async function transcribeAudio(audioPath) {
   const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
