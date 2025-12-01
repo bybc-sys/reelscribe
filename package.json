@@ -1,6 +1,6 @@
 {
   "name": "reelscribe",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Instagram Reel Transcription App",
   "main": "server.js",
   "scripts": {
